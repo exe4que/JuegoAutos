@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
+using UnityEditor;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -88,10 +89,11 @@ public class TrackModule : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    private int _lastRotation = 0;
-    private Vector3 _lastPosition;
+    private int _lastRotation = -1;
+    private Vector3 _lastPosition = Vector3.one * -1;
     private List<TrackModule> _trackModules = new();
 #endif
+
     private void Update()
     {
 #if UNITY_EDITOR
@@ -104,6 +106,10 @@ public class TrackModule : MonoBehaviour
 #if UNITY_EDITOR
     private void HandleRotation()
     {
+        if(_lastRotation == -1)
+        {
+            _lastRotation = _rotation;
+        }
         if (_lastRotation != _rotation)
         {
             _lastRotation = _rotation;
@@ -113,6 +119,7 @@ public class TrackModule : MonoBehaviour
             {
                 _connections[index].ConnectedModule = null;
                 _connections[index].ConnectedConnectionIndex = 0;
+                EditorUtility.SetDirty(this);
             }
         }
     }
@@ -133,8 +140,12 @@ public class TrackModule : MonoBehaviour
             _trackModules.Clear();
             return;
         }
-
+        
         //handle attachment
+        if(_lastPosition == Vector3.one * -1)
+        {
+            _lastPosition = this.transform.position;
+        }
         if (this.transform.position != _lastPosition)
         {
             for (var index = 0; index < _connections.Length; index++)
@@ -158,6 +169,7 @@ public class TrackModule : MonoBehaviour
                             transform.position += direction;
                             _connections[realIndex].ConnectedModule = otherModule;
                             _connections[realIndex].ConnectedConnectionIndex = otherIndex;
+                            EditorUtility.SetDirty(this);
                             connected = true;
                             break;
                         }
@@ -172,6 +184,7 @@ public class TrackModule : MonoBehaviour
                 {
                     _connections[realIndex].ConnectedModule = null;
                     _connections[realIndex].ConnectedConnectionIndex = 0;
+                    EditorUtility.SetDirty(this);
                 }
             }
             _lastPosition = this.transform.position;

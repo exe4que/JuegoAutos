@@ -26,23 +26,32 @@ public class TrackModule : MonoBehaviour
     private bool _isBezierGenerated = false;
     private int _bezierStartIndex = -1;
     private int _bezierEndIndex = -1;
+    private TrackModule _nextModule;
     
     public TrackModule GetNextModule()
     {
+        return _nextModule;
+    }
+
+    private void SetNextModule()
+    {
         if (_connections.Length == 0)
         {
-            return null;
+            Debug.LogError("Connections array is empty.");
+            _nextModule = null;
+            return;
         }
 
         foreach (var connection in _connections)
         {
             if (connection.Enabled && connection.ConnectedModule != null)
             {
-                return connection.ConnectedModule;
+                _nextModule = connection.ConnectedModule;
+                return;
             }
         }
 
-        return null;
+        Debug.LogError("No connected module found.");
     }
     
     public float GetLength(float xOffset)
@@ -181,6 +190,7 @@ public class TrackModule : MonoBehaviour
     private void Awake()
     {
         GenerateBezier();
+        SetNextModule();
     }
 
     private void Update()
@@ -207,7 +217,6 @@ public class TrackModule : MonoBehaviour
             for (int index = 0; index < _connections.Length; index++)
             {
                 _connections[index].ConnectedModule = null;
-                _connections[index].ConnectedConnectionIndex = 0;
                 EditorUtility.SetDirty(this);
             }
         }
@@ -257,7 +266,6 @@ public class TrackModule : MonoBehaviour
                             Vector3 direction = otherConnectionPosition - connectionPosition;
                             transform.position += direction;
                             _connections[realIndex].ConnectedModule = otherModule;
-                            _connections[realIndex].ConnectedConnectionIndex = otherIndex;
                             EditorUtility.SetDirty(this);
                             connected = true;
                             break;
@@ -272,7 +280,6 @@ public class TrackModule : MonoBehaviour
                 if(!connected)
                 {
                     _connections[realIndex].ConnectedModule = null;
-                    _connections[realIndex].ConnectedConnectionIndex = 0;
                     EditorUtility.SetDirty(this);
                 }
             }
@@ -426,7 +433,6 @@ public class TrackModule : MonoBehaviour
         [Range(0f,1f)]
         public float Position = 0.5f;
         public TrackModule ConnectedModule;
-        public int ConnectedConnectionIndex;
     }
     
     public enum TrackType

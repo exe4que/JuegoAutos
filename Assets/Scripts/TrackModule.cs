@@ -1,14 +1,13 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections;
-using UnityEditor;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class TrackModule : MonoBehaviour
 {
+    private static float _curveStrength = 0.921f;
+    
     [SerializeField]
     private TrackType _trackType = TrackType.Straight;
     
@@ -160,7 +159,7 @@ public class TrackModule : MonoBehaviour
     {
         Vector3 start = GetConnectionPosition(_bezierStartIndex);
         Vector3 end = GetConnectionPosition(_bezierEndIndex);
-        Vector3 center = (start + end) * 0.5f;
+        Vector3 center = Vector3.zero;
             
         if(_bezierStartIndex % 2 != _bezierEndIndex % 2)
         {
@@ -173,6 +172,12 @@ public class TrackModule : MonoBehaviour
                 center = new Vector3(start.x, center.y, end.z);
             }
         }
+
+        Vector3 focalPoint = GetCurveFocalPoint();
+        Vector3 outwardsVector = center - focalPoint;
+        center = focalPoint + outwardsVector * _curveStrength;
+        
+        
         //Vector3 bezierPoint = (1 - t) * (1 - t) * start + 2 * (1 - t) * t * center + t * t * end;
         Vector3 a = Vector3.Lerp(start, center, t);
         Vector3 b = Vector3.Lerp(center, end, t);
@@ -217,7 +222,7 @@ public class TrackModule : MonoBehaviour
             for (int index = 0; index < _connections.Length; index++)
             {
                 _connections[index].ConnectedModule = null;
-                EditorUtility.SetDirty(this);
+                UnityEditor.EditorUtility.SetDirty(this);
             }
         }
     }
@@ -266,7 +271,7 @@ public class TrackModule : MonoBehaviour
                             Vector3 direction = otherConnectionPosition - connectionPosition;
                             transform.position += direction;
                             _connections[realIndex].ConnectedModule = otherModule;
-                            EditorUtility.SetDirty(this);
+                            UnityEditor.EditorUtility.SetDirty(this);
                             connected = true;
                             break;
                         }
@@ -280,7 +285,7 @@ public class TrackModule : MonoBehaviour
                 if(!connected)
                 {
                     _connections[realIndex].ConnectedModule = null;
-                    EditorUtility.SetDirty(this);
+                    UnityEditor.EditorUtility.SetDirty(this);
                 }
             }
             _lastPosition = this.transform.position;

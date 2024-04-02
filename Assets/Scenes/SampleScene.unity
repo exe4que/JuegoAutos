@@ -2656,6 +2656,7 @@ MonoBehaviour:
   - {fileID: 46264120}
   - {fileID: 2197811369960010149}
   - {fileID: 8557694631711454047}
+  CurveStrength: 0.921
 --- !u!1001 &1878548898
 PrefabInstance:
   m_ObjectHideFlags: 0

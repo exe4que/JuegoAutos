@@ -10,6 +10,9 @@ using UnityEngine;
 public class TrackModule : MonoBehaviour
 {
     [SerializeField]
+    private TrackType _trackType = TrackType.Straight;
+    
+    [SerializeField]
     private Vector2 _size = new Vector2(15, 15);
 
     [SerializeField]
@@ -23,6 +26,64 @@ public class TrackModule : MonoBehaviour
     private bool _isBezierGenerated = false;
     private int _bezierStartIndex = -1;
     private int _bezierEndIndex = -1;
+    
+    public TrackModule GetNextModule()
+    {
+        if (_connections.Length == 0)
+        {
+            return null;
+        }
+
+        foreach (var connection in _connections)
+        {
+            if (connection.Enabled && connection.ConnectedModule != null)
+            {
+                return connection.ConnectedModule;
+            }
+        }
+
+        return null;
+    }
+    
+    public float GetLength(float xOffset)
+    {
+        if (_trackType == TrackType.Straight)
+        {
+            if(_rotation % 2 == 0)
+            {
+                return GetSize().y;
+            }
+            return GetSize().x;
+        }
+        else
+        {
+            float radius = -1f;
+            foreach (var connection in _connections)
+            {
+                if(connection.Enabled)
+                {
+                    Vector3 midPoint = GetBezierPoint(0.5f, out Vector3 tangent);
+                    Vector3 focalPoint = GetCurveFocalPoint();
+                    Vector3 inwardsOutwardsDirection = (focalPoint - midPoint).normalized;
+                    Vector3 cross = Vector3.Cross(inwardsOutwardsDirection, tangent);
+
+                    if (cross.y > 0) {
+                        // Target is to the right
+                        radius = (connection.Position * GetSize().x) - xOffset;
+                    } else {
+                        // Target is to the left
+                        radius = (connection.Position * GetSize().x) + xOffset;
+                    }
+                    break;
+                }
+            }
+            if (radius > 0f)
+            {
+                return 0.5f * Mathf.PI * radius;
+            }
+            return 0f;
+        }
+    }
 
     private Vector2 GetSize()
     {
@@ -38,7 +99,7 @@ public class TrackModule : MonoBehaviour
     {
         if (index < 0 || index >= _connections.Length)
         {
-            Debug.LogError("Invalid index");
+            Debug.LogError($"Invalid index {index} for connections array.");
             return Vector3.zero;
         }
         Vector3 position = Vector3.zero;
@@ -64,7 +125,29 @@ public class TrackModule : MonoBehaviour
         return position;
     }
 
-    private Vector3 GetBezierPoint(float t)
+
+    public Vector3 GetTrackPoint(float t, float xOffset, out Vector3 tangent)
+    {
+        switch (_trackType)
+        {
+            case TrackType.Straight:
+                Vector3 start = GetConnectionPosition(_bezierStartIndex);
+                Vector3 end = GetConnectionPosition(_bezierEndIndex);
+                tangent = (end - start).normalized;
+                Vector3 point = Vector3.Lerp(start, end, t);
+                Vector3 offset = Vector3.Cross(tangent, Vector3.up) * xOffset;
+                return point + offset;
+            case TrackType.Curve:
+                Vector3 bezierPoint = GetBezierPoint(t, out tangent);
+                Vector3 offset1 = Vector3.Cross(tangent, Vector3.up) * xOffset;
+                return bezierPoint + offset1;
+        }
+
+        tangent = Vector3.zero;
+        return default(Vector3);
+    }
+    
+    private Vector3 GetBezierPoint(float t, out Vector3 tangent)
     {
         Vector3 start = GetConnectionPosition(_bezierStartIndex);
         Vector3 end = GetConnectionPosition(_bezierEndIndex);
@@ -85,6 +168,7 @@ public class TrackModule : MonoBehaviour
         Vector3 a = Vector3.Lerp(start, center, t);
         Vector3 b = Vector3.Lerp(center, end, t);
         Vector3 bezierPoint = Vector3.Lerp(a, b, t);
+        tangent = (b - a).normalized;
         return bezierPoint;
     }
 
@@ -93,6 +177,11 @@ public class TrackModule : MonoBehaviour
     private Vector3 _lastPosition = Vector3.one * -1;
     private List<TrackModule> _trackModules = new();
 #endif
+
+    private void Awake()
+    {
+        GenerateBezier();
+    }
 
     private void Update()
     {
@@ -197,6 +286,54 @@ public class TrackModule : MonoBehaviour
         DrawModule();
         DrawConnections();
         DrawBezier();
+        DrawCurveRadius();
+    }
+
+    private void DrawCurveRadius()
+    {
+        if (_trackType == TrackType.Curve)
+        {
+            var centerPoint = GetCurveFocalPoint();
+
+            float radius = -1f;
+            foreach (var connection in _connections)
+            {
+                if(connection.Enabled)
+                {
+                    radius = connection.Position * _size.x;
+                    break;
+                }
+            }
+            
+            if (radius > 0f)
+            {
+                Gizmos.color = Color.cyan;
+                ExtraGizmos.DrawGizmosCircle(centerPoint, Vector3.up, radius, 20);
+            }
+            
+        }
+    }
+
+    private Vector3 GetCurveFocalPoint()
+    {
+        Vector3 centerPoint = Vector3.zero;
+        switch (_rotation)
+        {
+            case 0:
+                centerPoint = new Vector3(transform.position.x - _size.x * 0.5f, 0f, transform.position.z - _size.y * 0.5f);
+                break;
+            case 1:
+                centerPoint = new Vector3(transform.position.x + _size.x * 0.5f, 0f, transform.position.z - _size.y * 0.5f);
+                break;
+            case 2:
+                centerPoint = new Vector3(transform.position.x + _size.x * 0.5f, 0f, transform.position.z + _size.y * 0.5f);
+                break;
+            case 3:
+                centerPoint = new Vector3(transform.position.x - _size.x * 0.5f, 0f, transform.position.z + _size.y * 0.5f);
+                break;
+        }
+
+        return centerPoint;
     }
 
     private void DrawBezier()
@@ -208,7 +345,7 @@ public class TrackModule : MonoBehaviour
             for (int step = 0; step < 5; step++)
             {
                 float t = step / 4f;
-                Vector3 bezierPoint = GetBezierPoint(t);
+                Vector3 bezierPoint = GetTrackPoint(t, 0, out Vector3 tangent);
                 if(step > 0)
                 {
                     Gizmos.DrawLine(lastBezierPoint, bezierPoint);
@@ -290,5 +427,11 @@ public class TrackModule : MonoBehaviour
         public float Position = 0.5f;
         public TrackModule ConnectedModule;
         public int ConnectedConnectionIndex;
+    }
+    
+    public enum TrackType
+    {
+        Straight = 0,
+        Curve = 1
     }
 }

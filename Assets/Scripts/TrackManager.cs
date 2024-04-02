@@ -52,6 +52,13 @@ public class TrackManager : Singleton<TrackManager>
                 {
                     TrackModule nextModule = carData.CurrentModule.GetNextModule();
                     carData.CurrentModule = nextModule;
+                    
+                    // Prevents errors due to floating point precision
+                    if(carData.CurrentModulePositionRange.y > carData.TotalLength)
+                    {
+                        carData.CurrentModulePositionRange.y %= carData.TotalLength;
+                        carData.TrackPosition %= carData.TotalLength;
+                    }
                     carData.CurrentModulePositionRange = new Vector2(carData.CurrentModulePositionRange.y, carData.CurrentModulePositionRange.y + nextModule.GetLength(carData.XOffset));
                 }
                 
@@ -73,13 +80,13 @@ public class TrackManager : Singleton<TrackManager>
             XOffset = xOffset,
             CurrentModule = _trackModules[0],
             CurrentModulePositionRange = new Vector2(0, _trackModules[0].GetLength(xOffset)),
-            TrackPosition = _trackModules[0].GetLength(0) * 0.5f,
-            SpeedMultiplier = 1f
+            TrackPosition = _trackModules[0].GetLength(0) * 0.5f
         };
         float normalTrackLength = GetTrackTotalLength(0);
         float carTrackLength = GetTrackTotalLength(xOffset);
         
         carTrackData.SpeedMultiplier =  carTrackLength / normalTrackLength;
+        carTrackData.TotalLength = carTrackLength;
         _carTrackData.Add(carId, carTrackData);
     }
 
@@ -123,5 +130,6 @@ public class TrackManager : Singleton<TrackManager>
         public Vector2 CurrentModulePositionRange;
         public float TrackPosition;
         public float SpeedMultiplier;
+        public float TotalLength;
     }
 }

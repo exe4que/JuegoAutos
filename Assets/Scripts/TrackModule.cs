@@ -74,7 +74,7 @@ public class TrackModule : MonoBehaviour
                     Vector3 focalPoint = GetCurveFocalPoint();
                     Vector3 inwardsOutwardsDirection = (focalPoint - midPoint).normalized;
                     Vector3 cross = Vector3.Cross(inwardsOutwardsDirection, tangent);
-
+                    
                     if (cross.y > 0) {
                         // Target is to the right
                         radius = (connection.Position * GetSize().x) - xOffset;
@@ -117,16 +117,16 @@ public class TrackModule : MonoBehaviour
         switch (index)
         {
             case 0:
-                position = transform.position + new Vector3(-realSize.x * 0.5f, 0f, -realSize.y * 0.5f + (realSize.y * _connections[realIndex].Position));
+                position = transform.position + new Vector3(-realSize.x * 0.5f, _connections[realIndex].FloorLevel, -realSize.y * 0.5f + (realSize.y * _connections[realIndex].Position));
                 break;
             case 1:
-                position = transform.position + new Vector3(-realSize.x * 0.5f + realSize.x * _connections[realIndex].Position, 0f, realSize.y * 0.5f);
+                position = transform.position + new Vector3(-realSize.x * 0.5f + realSize.x * _connections[realIndex].Position, _connections[realIndex].FloorLevel, realSize.y * 0.5f);
                 break;
             case 2:
-                position = transform.position + new Vector3(realSize.x * 0.5f, 0f, realSize.y * 0.5f - (realSize.y * _connections[realIndex].Position));
+                position = transform.position + new Vector3(realSize.x * 0.5f, _connections[realIndex].FloorLevel, realSize.y * 0.5f - (realSize.y * _connections[realIndex].Position));
                 break;
             case 3:
-                position = transform.position + new Vector3(realSize.x * 0.5f - realSize.x * _connections[realIndex].Position, 0f, -realSize.y * 0.5f);
+                position = transform.position + new Vector3(realSize.x * 0.5f - realSize.x * _connections[realIndex].Position, _connections[realIndex].FloorLevel, -realSize.y * 0.5f);
                 break;
         }
 
@@ -264,7 +264,10 @@ public class TrackModule : MonoBehaviour
                     for (var otherIndex = 0; otherIndex < otherModule._connections.Length; otherIndex++)
                     {
                         Vector3 connectionPosition = GetConnectionPosition(index);
+                        connectionPosition.y = 0;
+                        
                         Vector3 otherConnectionPosition = otherModule.GetConnectionPosition(otherIndex);
+                        otherConnectionPosition.y = 0;
                         if (Vector3.Distance(connectionPosition, otherConnectionPosition) < 2f)
                         {
                             //Align this gameobject with the other gameobject
@@ -299,6 +302,7 @@ public class TrackModule : MonoBehaviour
         DrawConnections();
         DrawBezier();
         DrawCurveRadius();
+        //UnityEditor.Handles.Label(this.transform.position, $"Normal Length: {GetLength(0f)}, Offset Length: {GetLength(-3f)}");
     }
 
     private void DrawCurveRadius()
@@ -397,6 +401,17 @@ public class TrackModule : MonoBehaviour
         Gizmos.color = Color.red;
         Vector2 realSize = GetSize();
         Gizmos.DrawWireCube(transform.position, new Vector3(realSize.x, 0f, realSize.y));
+        //draw floor level
+        Gizmos.color = Color.yellow;
+        for (int i = 0; i < _connections.Length; i++)
+        {
+            int realIndex = (i + _rotation) % 4;
+            if (_connections[realIndex].Enabled)
+            {
+                Vector3 connectionPosition = GetConnectionPosition(i);
+                Gizmos.DrawLine(connectionPosition + Vector3.down * _connections[realIndex].FloorLevel, connectionPosition);
+            }
+        }
     }
 
     private void GenerateBezier()
@@ -438,6 +453,7 @@ public class TrackModule : MonoBehaviour
         [Range(0f,1f)]
         public float Position = 0.5f;
         public TrackModule ConnectedModule;
+        public float FloorLevel = 0f;
     }
     
     public enum TrackType

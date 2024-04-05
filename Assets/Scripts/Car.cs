@@ -34,7 +34,7 @@ public class Car : MonoBehaviour
         if(Application.isPlaying)
         {
             UnityEditor.Handles.Label(this.transform.position,
-                $"Distance run: {TrackManager.Instance.GetCarTrackPosition(Id).ToString("F2")}m"
+                $"Distance run: {TrackManager.Instance.GetCarTrackPosition(Id).ToString("F2")}/{TrackManager.Instance.GetCarTrackLength(Id).ToString("F2")}m"
                 + $"\nSpeed: {TrackManager.Instance.GetCarSpeed(Id).ToString("F2")}m/s");
         }
     }

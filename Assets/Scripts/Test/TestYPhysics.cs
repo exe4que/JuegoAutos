@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace RaceGame
+namespace RaceGame.Test
 {
     public class TestYPhysics : MonoBehaviour
     {

@@ -33,6 +33,7 @@ namespace RaceGame.Test
         public void PlayAnimation()
         {
             AnimationTime = 0f;
+            _timer = Random.value;
             _tween?.Kill();
             _tween = DOTween.To(() => AnimationTime, x => AnimationTime = x, 1f, AnimationDuration).SetEase(Ease.Linear);
         }

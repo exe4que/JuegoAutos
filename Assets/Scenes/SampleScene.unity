@@ -1801,6 +1801,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: muscle type b color 2
       objectReference: {fileID: 0}
+    - target: {fileID: 5023132480925528600, guid: ceb813c90179cf54fa8cda204f553901, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7321496962237047955, guid: ceb813c90179cf54fa8cda204f553901, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.2
@@ -5286,6 +5290,12 @@ MonoBehaviour:
   _carsReachMaxSpeedDuration: 1
   _carsBounciness: 0.5
   _gravity: 1.5
+  _carsTurboSpeedMultiplier: 2
+  _carsTurboDuration: 2
+  _carsTurboReachMaxSpeedDuration: 0.3
+  _carsTurboGetBackToNormalSpeedDuration: 1
+  _carsTurboCooldown: 10
+  _carsTurboDoubleTapMaxDuration: 0.5
   _startModule: {fileID: 0}
   _trackModules:
   - {fileID: 695487602576262497}
@@ -6030,6 +6040,10 @@ PrefabInstance:
     - target: {fileID: 4329876011565719924, guid: 6ee1a1c7de51fb9418968d0c52c65c07, type: 3}
       propertyPath: m_Name
       value: sports type b color 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4329876011565719924, guid: 6ee1a1c7de51fb9418968d0c52c65c07, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
